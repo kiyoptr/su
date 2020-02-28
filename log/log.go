@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ShrewdSpirit/errors"
+	"github.com/ShrewdSpirit/su/errors"
 )
 
 var (
