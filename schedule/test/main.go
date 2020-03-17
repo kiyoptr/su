@@ -3,17 +3,22 @@ package main
 import (
 	"fmt"
 	"github.com/ShrewdSpirit/su/schedule"
-	"sync"
+	"time"
 )
 
 func main() {
-	wg := sync.WaitGroup{}
+	go schedule.Every(1).Second().
+		From(time.Now().Add(3*time.Second)).
+		To(time.Now().Add(6*time.Second)).
+		Do(func(task *schedule.Task) {
+			fmt.Printf("1 Second after %dms\n", task.Elapsed.Milliseconds())
+		}, nil)
 
-	schedule.Every(1).Seconds().Do(func(task *schedule.Task) {
-		fmt.Printf("1 sec after %dms\n", task.Elapsed.Milliseconds())
-	}, nil)
+	time.Sleep(1 * time.Second)
+	schedule.Wait()
 
-	wg.Add(1)
-	schedule.Run(schedule.Config{})
-	wg.Wait()
+	//time.Sleep(3*time.Second)
+	//fmt.Printf("stopping %d tasks\n", schedule.NumTasks())
+	//schedule.Stop()
+	//fmt.Println("done")
 }
