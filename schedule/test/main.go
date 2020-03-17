@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	go schedule.Every(1).Second().
+	go schedule.Every().Second().
 		From(time.Now().Add(3*time.Second)).
 		To(time.Now().Add(6*time.Second)).
 		Do(func(task *schedule.Task) {

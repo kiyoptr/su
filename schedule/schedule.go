@@ -66,12 +66,18 @@ func Wait() { tWaitGroup.Wait() }
 
 func NumTasks() int { return len(openTasks) }
 
-func Every(interval int) *TaskConfig {
+// Every begins configuring a task. Supply zero or one intervals. No intervals will be counted as 1
+func Every(interval ...int) *TaskConfig {
+	i := 1
+	if len(interval) > 0 {
+		i = interval[0]
+	}
+
 	now := time.Now()
 	return &TaskConfig{
 		oneShot:  false,
 		lastRun:  now,
-		interval: time.Duration(interval),
+		interval: time.Duration(i),
 		weekDay:  now.Weekday(),
 		hour:     now.Hour(),
 		minute:   now.Minute(),
@@ -123,9 +129,6 @@ func (t *TaskConfig) Do(f TaskFunc, payload interface{}) {
 		select {
 		case <-ticker.C:
 			if time.Since(t.nextStep) > 0 {
-				if t.to.Year() != 1 && time.Now().After(t.to) {
-					goto end
-				}
 
 				if time.Now().After(t.from) {
 					t.task.Elapsed = time.Since(t.lastRun)
@@ -138,6 +141,10 @@ func (t *TaskConfig) Do(f TaskFunc, payload interface{}) {
 					}
 				}
 				t.calculateNextRun()
+
+				if t.to.Year() != 1 && t.nextStep.After(t.to) {
+					goto end
+				}
 			}
 		case <-stopSignal:
 			return
