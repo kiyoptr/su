@@ -161,6 +161,7 @@ end:
 }
 
 func (t *TaskConfig) Then(f TaskFunc) *TaskConfig {
+	t.task.Elapsed = time.Since(t.lastRun)
 	if f != nil {
 		f(t.task)
 	}
