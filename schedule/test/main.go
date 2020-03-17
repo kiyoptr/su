@@ -12,7 +12,10 @@ func main() {
 		To(time.Now().Add(6*time.Second)).
 		Do(func(task *schedule.Task) {
 			fmt.Printf("1 Second after %dms\n", task.Elapsed.Milliseconds())
-		}, nil)
+		}, nil).
+		Then(func(task *schedule.Task) {
+			fmt.Printf("\ttask %s is done\n", task.Id())
+		})
 
 	time.Sleep(1 * time.Second)
 	schedule.Wait()

@@ -39,6 +39,8 @@ type Task struct {
 	Elapsed time.Duration
 }
 
+func (t *Task) Id() uuid.UUID { return t.config.id }
+
 var Config = struct {
 	MaxTasks   int
 	TaskWaitUs time.Duration
@@ -109,11 +111,12 @@ func (t *TaskConfig) Remove() {
 	// TODO: storage: Remove
 }
 
-func (t *TaskConfig) Do(f TaskFunc, payload interface{}) {
+func (t *TaskConfig) Do(f TaskFunc, payload interface{}) (r *TaskConfig) {
 	tWaitGroup.Add(1)
 	defer tWaitGroup.Done()
 
 	// TODO: storage: new task
+	r = t
 	t.handler = f
 	t.task = &Task{
 		config:  t,
@@ -154,6 +157,14 @@ func (t *TaskConfig) Do(f TaskFunc, payload interface{}) {
 end:
 	t.Remove()
 	<-openTasks
+	return
+}
+
+func (t *TaskConfig) Then(f TaskFunc) *TaskConfig {
+	if f != nil {
+		f(t.task)
+	}
+	return t
 }
 
 func (t *TaskConfig) At(hour, minute int) *TaskConfig {
