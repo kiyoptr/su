@@ -7,11 +7,11 @@ import (
 )
 
 func main() {
-	go schedule.Every().Second().
-		From(time.Now().Add(3*time.Second)).
-		To(time.Now().Add(6*time.Second)).
+	go schedule.Every().Day().At(15, 30).
+		From(time.Now().AddDate(0, 0, 1)).
+		To(time.Now().AddDate(0, 0, 7)).
 		Do(func(task *schedule.Task) {
-			fmt.Printf("1 Second after %dms\n", task.Elapsed.Milliseconds())
+			fmt.Println("AYYY")
 		}, nil).
 		Then(func(task *schedule.Task) {
 			fmt.Printf("\ttask %s is done\n", task.Id())
