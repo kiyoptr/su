@@ -62,8 +62,8 @@ func (e *Error) Error() string {
 func (e *Error) Unwrap() error { return e.Inner }
 
 // getCallerInfo returns the file and line that called any of New functions as string
-func getCallerInfo() string {
-	_, file, line, ok := runtime.Caller(2)
+func getCallerInfo(skipFrames int) string {
+	_, file, line, ok := runtime.Caller(2 + skipFrames)
 	if !ok {
 		return "<no source>"
 	}
@@ -74,7 +74,7 @@ func getCallerInfo() string {
 // New constructs a new Error
 func New(msg string) error {
 	return &Error{
-		Source:  getCallerInfo(),
+		Source:  getCallerInfo(0),
 		Message: errors.New(msg),
 	}
 }
@@ -82,24 +82,53 @@ func New(msg string) error {
 // Newi attaches a new Error to an existing error to give it context
 func Newi(inner error, msg string) error {
 	return &Error{
-		Source:  getCallerInfo(),
+		Source:  getCallerInfo(0),
 		Message: errors.New(msg),
 		Inner:   inner,
 	}
 }
 
-// Newf is same as New but it formats the message
 func Newf(format string, params ...interface{}) error {
 	return &Error{
-		Source:  getCallerInfo(),
+		Source:  getCallerInfo(0),
 		Message: errors.New(fmt.Sprintf(format, params...)),
 	}
 }
 
-// Newfi is same as Newi but with formatted message
 func Newfi(inner error, format string, params ...interface{}) error {
 	return &Error{
-		Source:  getCallerInfo(),
+		Source:  getCallerInfo(0),
+		Message: errors.New(fmt.Sprintf(format, params...)),
+		Inner:   inner,
+	}
+}
+
+// News constructs a new Error and skips given frames for getting stack info.
+func News(skip int, msg string) error {
+	return &Error{
+		Source:  getCallerInfo(skip),
+		Message: errors.New(msg),
+	}
+}
+
+func Newis(skip int, inner error, msg string) error {
+	return &Error{
+		Source:  getCallerInfo(skip),
+		Message: errors.New(msg),
+		Inner:   inner,
+	}
+}
+
+func Newfs(skip int, format string, params ...interface{}) error {
+	return &Error{
+		Source:  getCallerInfo(skip),
+		Message: errors.New(fmt.Sprintf(format, params...)),
+	}
+}
+
+func Newfis(skip int, inner error, format string, params ...interface{}) error {
+	return &Error{
+		Source:  getCallerInfo(skip),
 		Message: errors.New(fmt.Sprintf(format, params...)),
 		Inner:   inner,
 	}
