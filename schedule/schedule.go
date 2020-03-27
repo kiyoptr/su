@@ -45,7 +45,7 @@ var Config = struct {
 	MaxTasks   int
 	TaskWaitUs time.Duration
 }{
-	MaxTasks:   1024,
+	MaxTasks:   65 * 1000,
 	TaskWaitUs: 1,
 }
 
@@ -107,16 +107,10 @@ func (t *TaskConfig) calculateNextRun() {
 	}
 }
 
-func (t *TaskConfig) Remove() {
-	// TODO: storage: Remove
-}
-
-func (t *TaskConfig) Do(f TaskFunc, payload interface{}) (r *TaskConfig) {
+func (t *TaskConfig) Do(f TaskFunc, payload interface{}) {
 	tWaitGroup.Add(1)
 	defer tWaitGroup.Done()
 
-	// TODO: storage: new task
-	r = t
 	t.handler = f
 	t.task = &Task{
 		config:  t,
@@ -140,24 +134,21 @@ func (t *TaskConfig) Do(f TaskFunc, payload interface{}) (r *TaskConfig) {
 					}
 					t.lastRun = time.Now()
 					if t.oneShot {
-						goto end
+						<-openTasks
+						return
 					}
 				}
 				t.calculateNextRun()
 
 				if t.to.Year() != 1 && t.nextStep.After(t.to) {
-					goto end
+					<-openTasks
+					return
 				}
 			}
 		case <-stopSignal:
 			return
 		}
 	}
-
-end:
-	t.Remove()
-	<-openTasks
-	return
 }
 
 func (t *TaskConfig) Then(f TaskFunc) *TaskConfig {
