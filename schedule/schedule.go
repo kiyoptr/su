@@ -30,7 +30,8 @@ type TaskConfig struct {
 	hour, minute int
 	from, to     time.Time
 
-	task *Task
+	task       *Task
+	shouldStop chan struct{}
 }
 
 type Task struct {
@@ -50,8 +51,8 @@ var Config = struct {
 }
 
 var (
-	openTasks  = make(chan int, Config.MaxTasks)
-	stopSignal = make(chan int, Config.MaxTasks)
+	openTasks  = make(chan struct{}, Config.MaxTasks)
+	stopSignal = make(chan struct{}, Config.MaxTasks)
 	tWaitGroup = sync.WaitGroup{}
 	local      = time.Local
 )
@@ -59,7 +60,7 @@ var (
 // Stop stops processing all tasks. It **MUST** be called whenever the program finishes so tasks will be saved.
 func Stop() {
 	for i := 0; i < len(openTasks); i++ {
-		stopSignal <- 1
+		stopSignal <- struct{}{}
 	}
 	Wait()
 }
@@ -107,10 +108,15 @@ func (t *TaskConfig) calculateNextRun() {
 	}
 }
 
-func (t *TaskConfig) Do(f TaskFunc, payload interface{}) {
+func (t *TaskConfig) Stop() {
+	t.shouldStop <- struct{}{}
+}
+
+func (t *TaskConfig) Do(f TaskFunc, payload ...interface{}) (r *TaskConfig) {
 	tWaitGroup.Add(1)
 	defer tWaitGroup.Done()
 
+	r = t
 	t.handler = f
 	t.task = &Task{
 		config:  t,
@@ -120,13 +126,12 @@ func (t *TaskConfig) Do(f TaskFunc, payload interface{}) {
 	t.id, _ = uuid.NewRandom()
 	t.calculateNextRun()
 
-	openTasks <- 1
+	openTasks <- struct{}{}
 	ticker := time.NewTicker(Config.TaskWaitUs * time.Microsecond)
 	for {
 		select {
 		case <-ticker.C:
 			if time.Since(t.nextStep) > 0 {
-
 				if time.Now().After(t.from) {
 					t.task.Elapsed = time.Since(t.lastRun)
 					if t.handler != nil {
@@ -146,6 +151,9 @@ func (t *TaskConfig) Do(f TaskFunc, payload interface{}) {
 				}
 			}
 		case <-stopSignal:
+			return
+		case <-t.shouldStop:
+			<-openTasks
 			return
 		}
 	}
