@@ -112,7 +112,7 @@ func (t *TaskConfig) Stop() {
 	t.shouldStop <- struct{}{}
 }
 
-func (t *TaskConfig) Do(f TaskFunc, payload ...interface{}) (r *TaskConfig) {
+func (t *TaskConfig) Do(f TaskFunc, payload interface{}) (r *TaskConfig) {
 	tWaitGroup.Add(1)
 	defer tWaitGroup.Done()
 
