@@ -141,8 +141,8 @@ func Create(dc *gorm.DB, m Model) error {
 	return dc.Create(m).Error
 }
 
-func Update(dc *gorm.DB, m Model, updateFields []string) error {
-	if updateFields != nil {
+func Update(dc *gorm.DB, m Model, updateFields ...string) error {
+	if len(updateFields) > 0 {
 		fields := map[string]interface{}{}
 		mt := reflect.TypeOf(m).Elem()
 		mv := reflect.ValueOf(m).Elem()
