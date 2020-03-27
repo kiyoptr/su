@@ -1,4 +1,4 @@
-package dbcontext
+package db
 
 import (
 	"github.com/jinzhu/gorm"
