@@ -30,13 +30,13 @@ type BaseModel struct {
 }
 
 type Model interface {
-	TableName() string
+	ModelName() string
 }
 
 var modelsList = map[string]Model{}
 
 func DefineModel(m Model) {
-	modelsList[m.TableName()] = m
+	modelsList[m.ModelName()] = m
 }
 
 func CheckModelTables(dc *gorm.DB) (err error) {
