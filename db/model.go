@@ -72,9 +72,6 @@ func scope(dc *gorm.DB, scopes []ScopeFunc) *gorm.DB {
 	return dc.Scopes(s...)
 }
 
-// ###############################################################################################
-// Basic query
-
 func applyQueryOptions(dcIn *gorm.DB, opt *QueryOptions) (dc *gorm.DB) {
 	dc = dcIn
 
@@ -91,9 +88,23 @@ func applyQueryOptions(dcIn *gorm.DB, opt *QueryOptions) (dc *gorm.DB) {
 	return
 }
 
-// FindSingle finds the first matching row.
+// ###############################################################################################
+// Basic query
+
+// Count counts the number of rows.
+func Count(dc *gorm.DB, m Model, opt *QueryOptions, scopes ...ScopeFunc) (n uint, err error) {
+	dc = applyQueryOptions(dc, opt)
+
+	err = scope(dc.Model(m), scopes).Count(&n).Error
+	if gorm.IsRecordNotFoundError(err) {
+		err = nil
+	}
+	return
+}
+
+// QuerySingle finds the first matching row.
 // m should be a pointer to model and result will be of same type only if anything was found otherwise it will be nil.
-func FindSingle(dc *gorm.DB, m Model, opt *QueryOptions, scopes ...ScopeFunc) (result Model, err error) {
+func QuerySingle(dc *gorm.DB, m Model, opt *QueryOptions, scopes ...ScopeFunc) (result Model, err error) {
 	dc = applyQueryOptions(dc, opt)
 
 	err = scope(dc, scopes).First(m).Error
@@ -105,19 +116,9 @@ func FindSingle(dc *gorm.DB, m Model, opt *QueryOptions, scopes ...ScopeFunc) (r
 	return
 }
 
-func Count(dc *gorm.DB, m Model, opt *QueryOptions, scopes ...ScopeFunc) (n uint, err error) {
-	dc = applyQueryOptions(dc, opt)
-
-	err = scope(dc.Model(m), scopes).Count(&n).Error
-	if gorm.IsRecordNotFoundError(err) {
-		err = nil
-	}
-	return
-}
-
-// FindAll finds all matching rows.
+// QueryAll finds all matching rows.
 // m should be a pointer to model and result will be a slice of model type (not a slice to pointer).
-func FindAll(dc *gorm.DB, m Model, opt *QueryOptions, scopes ...ScopeFunc) (result interface{}, err error) {
+func QueryAll(dc *gorm.DB, m Model, opt *QueryOptions, scopes ...ScopeFunc) (result interface{}, err error) {
 	dc = applyQueryOptions(dc, opt)
 
 	t := reflect.TypeOf(m).Elem()
