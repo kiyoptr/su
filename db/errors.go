@@ -24,7 +24,7 @@ func errFactory(msg string, err error, m Model, extra ...string) error {
 		}
 	}
 
-	return errors.Newfis(2, err, "%s model %s%s", msg, m.ModelName(), sb.String())
+	return errors.Newfis(2, err, "%s model %s%s", msg, m.TableName(), sb.String())
 }
 
 func ErrCreate(err error, m Model, extra ...string) error {
