@@ -76,7 +76,7 @@ func setOutputFile() (err error) {
 
 	currentFile, err = os.OpenFile(logFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err != nil {
-		err = errors.Newfi(err, "failed to create log file %v", logFilename)
+		err = errors.Newif(err, "failed to create log file %v", logFilename)
 		return
 	}
 

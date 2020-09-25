@@ -7,7 +7,7 @@ import (
 )
 
 func ErrOpen(err error) error {
-	return errors.Newis(1, err, "failed to open db connection")
+	return errors.Newsi(1, err, "failed to open db connection")
 }
 
 func errFactory(msg string, err error, m Model, extra ...string) error {
@@ -24,7 +24,7 @@ func errFactory(msg string, err error, m Model, extra ...string) error {
 		}
 	}
 
-	return errors.Newfis(2, err, "%s model %s%s", msg, m.TableName(), sb.String())
+	return errors.Newsif(2, err, "%s model %s%s", msg, m.TableName(), sb.String())
 }
 
 func ErrCreate(err error, m Model, extra ...string) error {

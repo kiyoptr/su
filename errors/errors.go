@@ -17,8 +17,7 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	var err error
-	err = e
+	var err error = e
 
 	builder := new(strings.Builder)
 
@@ -95,7 +94,7 @@ func Newf(format string, params ...interface{}) error {
 	}
 }
 
-func Newfi(inner error, format string, params ...interface{}) error {
+func Newif(inner error, format string, params ...interface{}) error {
 	return &Error{
 		Source:  getCallerInfo(0),
 		Message: errors.New(fmt.Sprintf(format, params...)),
@@ -111,7 +110,7 @@ func News(skip int, msg string) error {
 	}
 }
 
-func Newis(skip int, inner error, msg string) error {
+func Newsi(skip int, inner error, msg string) error {
 	return &Error{
 		Source:  getCallerInfo(skip),
 		Message: errors.New(msg),
@@ -119,14 +118,14 @@ func Newis(skip int, inner error, msg string) error {
 	}
 }
 
-func Newfs(skip int, format string, params ...interface{}) error {
+func Newsf(skip int, format string, params ...interface{}) error {
 	return &Error{
 		Source:  getCallerInfo(skip),
 		Message: errors.New(fmt.Sprintf(format, params...)),
 	}
 }
 
-func Newfis(skip int, inner error, format string, params ...interface{}) error {
+func Newsif(skip int, inner error, format string, params ...interface{}) error {
 	return &Error{
 		Source:  getCallerInfo(skip),
 		Message: errors.New(fmt.Sprintf(format, params...)),
