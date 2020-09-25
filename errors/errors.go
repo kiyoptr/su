@@ -30,15 +30,15 @@ func (e *Error) Each(it func(err error) bool) {
 
 	var current error = e
 	for current != nil {
+		if !it(current) {
+			break
+		}
+
 		var cast *Error
 		if As(current, &cast) {
 			current = cast.Unwrap()
 		} else {
 			current = nil
-		}
-
-		if !it(current) {
-			break
 		}
 	}
 }
