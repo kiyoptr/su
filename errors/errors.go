@@ -5,6 +5,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"runtime"
+	"strings"
 )
 
 // Error is a lightweight error struct with context
@@ -48,15 +49,23 @@ func (e *Error) StackTrace() (list []string) {
 	list = make([]string, 0, 5)
 
 	e.Each(func(err error) bool {
-		list = append(list, err.Error())
+		if e, ok := err.(*Error); ok {
+			list = append(list, e.String())
+		} else {
+			list = append(list, err.Error())
+		}
 		return true
 	})
 
 	return
 }
 
-func (e *Error) Error() string {
+func (e *Error) String() string {
 	return fmt.Sprintf("%v: %v", e.Source, e.Message)
+}
+
+func (e *Error) Error() string {
+	return strings.Join(e.StackTrace(), "\n")
 }
 
 func (e *Error) Unwrap() error { return e.Inner }
