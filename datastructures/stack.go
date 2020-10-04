@@ -1,6 +1,12 @@
 package datastructures
 
-import "sync"
+import (
+	"fmt"
+	"strings"
+	"sync"
+)
+
+var StackInitialSize = 10
 
 type Stack struct {
 	items []ItemType
@@ -16,7 +22,7 @@ func (s *Stack) Push(value interface{}) {
 	defer s.lock.Unlock()
 
 	if s.items == nil {
-		s.items = []ItemType{}
+		s.items = make([]ItemType, StackInitialSize)
 	}
 
 	s.items = append(s.items, value)
@@ -58,6 +64,13 @@ func (s *Stack) Len() int {
 	return len(s.items)
 }
 
+func (s *Stack) Cap() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return cap(s.items)
+}
+
 func (s *Stack) Empty() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -70,4 +83,31 @@ func (s *Stack) IsEmpty() bool {
 	defer s.lock.RUnlock()
 
 	return s.items == nil || len(s.items) == 0
+}
+
+func (s *Stack) Iterate() <-chan IndexValuePair {
+	it := make(chan IndexValuePair, 1)
+
+	go func() {
+		s.lock.RLock()
+		defer s.lock.RUnlock()
+
+		for i, v := range s.items {
+			it <- IndexValuePair{i, v}
+		}
+
+		close(it)
+	}()
+
+	return it
+}
+
+func (s *Stack) Join(sep string) string {
+	values := make([]string, s.Len())
+
+	for elem := range s.Iterate() {
+		values[elem.Index] = fmt.Sprintf("%v", elem.Value)
+	}
+
+	return strings.Join(values, sep)
 }
