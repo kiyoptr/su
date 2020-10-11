@@ -26,3 +26,12 @@ func GetFuncName(f interface{}, getFullName bool) string {
 
 	return name
 }
+
+func GetFuncInfo(f interface{}) (funcName, funcFile string, funcLine int) {
+	funcInfo := runtime.FuncForPC(reflect.ValueOf(f).Pointer())
+
+	funcName = funcInfo.Name()
+	funcFile, funcLine = funcInfo.FileLine(funcInfo.Entry())
+
+	return
+}
