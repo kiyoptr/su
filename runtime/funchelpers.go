@@ -28,10 +28,25 @@ func GetFuncName(f interface{}, getFullName bool) string {
 }
 
 func GetFuncInfo(f interface{}) (funcName, funcFile string, funcLine int) {
-	funcInfo := runtime.FuncForPC(reflect.ValueOf(f).Pointer())
+	return getFuncDetails(runtime.FuncForPC(reflect.ValueOf(f).Pointer()))
+}
 
-	funcName = funcInfo.Name()
-	funcFile, funcLine = funcInfo.FileLine(funcInfo.Entry())
+func GetFuncInfoForPc(pc uintptr) (funcName, funcFile string, funcLine int) {
+	return getFuncDetails(runtime.FuncForPC(pc))
+}
+
+func GetStackFuncPointer(skipFrames int) uintptr {
+	pc, _, _, ok := runtime.Caller(1 + skipFrames)
+	if !ok {
+		return 0
+	}
+
+	return pc
+}
+
+func getFuncDetails(f *runtime.Func) (funcName, funcFile string, funcLine int) {
+	funcName = f.Name()
+	funcFile, funcLine = f.FileLine(f.Entry())
 
 	return
 }
