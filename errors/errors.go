@@ -60,14 +60,17 @@ func (e *Error) StackTrace() (list []string) {
 	return
 }
 
+// String returns current error's message and source
 func (e *Error) String() string {
 	return fmt.Sprintf("%v: %v", e.Source, e.Message)
 }
 
+// Error returns the stack trace of this error
 func (e *Error) Error() string {
 	return strings.Join(e.StackTrace(), "\n")
 }
 
+// Unwrap returns the inner error
 func (e *Error) Unwrap() error { return e.Inner }
 
 // getCallerInfo returns the file and line that called any of New functions as string

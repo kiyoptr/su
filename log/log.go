@@ -2,123 +2,71 @@ package log
 
 import (
 	"fmt"
-	"io"
-	golog "log"
-	"os"
-	"path"
+	"github.com/kiyoptr/su/log/adapter"
+	"github.com/kiyoptr/su/log/tagprovider"
 	"sync"
-	"time"
-
-	"github.com/ShrewdSpirit/su/errors"
 )
 
 var (
-	logger      *golog.Logger
-	currentFile *os.File
-	writer      io.Writer
-	rootDir     string
-	currentDay  time.Time
-	lastFlush   time.Time
-
-	FlushDelay = 100 * time.Millisecond
-
-	queue = []string{}
-	lock  = sync.Mutex{}
+	// instance is the global instance of logger
+	instance *Logger
 )
 
-func Load(logsDir string) error {
-	rootDir = logsDir
+func SetGlobal(l *Logger) {
+	instance = l
+}
 
-	if _, err := os.Stat(rootDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(rootDir, os.ModePerm); err != nil {
-			return errors.Newi(err, "failed to create logs directory")
+func Instance() *Logger { return instance }
+
+// Logger is a thread-safe logging type
+type Logger struct {
+	staticTags taglist
+	customTags taglist
+	adapters   []adapter.Adapter
+	lock       sync.Mutex
+}
+
+func (l *Logger) Close() error {
+	for _, a := range l.adapters {
+		if err := a.Close(); err != nil {
+			return err
 		}
-	}
-
-	logger = golog.New(os.Stdout, "", golog.LstdFlags)
-	if err := setOutputFile(); err != nil {
-		return err
 	}
 
 	return nil
 }
 
-func Close() {
-	flush()
-	if currentFile != nil {
-		currentFile.Close()
+func (l *Logger) Mode(mode Mode) *Logger {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	l.customTags.set(toMode, tagprovider.Constant("mode", mode))
+	return l
+}
+
+func (l *Logger) Tag(key string, value interface{}) *Logger {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	l.customTags.set(toCustom, tagprovider.Constant(key, value))
+	return l
+}
+
+func (l *Logger) Write() {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	l.write()
+}
+
+func (l *Logger) Writef(format string, args ...interface{}) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	l.customTags.set(toMessage, tagprovider.Constant("message", fmt.Sprintf(format, args...)))
+	l.write()
+}
+
+func (l *Logger) write() {
+	t := l.staticTags.merge(l.customTags).build()
+	for _, a := range l.adapters {
+		a.Write(t)
 	}
-}
-
-func Log(msg string) {
-	Logs("I", msg)
-}
-
-func Logf(format string, params ...interface{}) {
-	Logfs("I", format, params...)
-}
-
-func Logfs(state, format string, params ...interface{}) {
-	addQueue(state, fmt.Sprintf(format, params...))
-}
-
-func Logs(state, msg string) {
-	addQueue(state, msg)
-}
-
-func Error(err error) {
-	addQueue("E", err.Error())
-}
-
-func setOutputFile() (err error) {
-	currentDay = time.Now()
-	logFilename := path.Join(rootDir, fmt.Sprintf("log-%v-%v-%v.txt", currentDay.Year(), int(currentDay.Month()), currentDay.Day()))
-
-	currentFile, err = os.OpenFile(logFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
-	if err != nil {
-		err = errors.Newif(err, "failed to create log file %v", logFilename)
-		return
-	}
-
-	writer = io.MultiWriter(os.Stdout, currentFile)
-	logger.SetOutput(writer)
-
-	return
-}
-
-func checkLogFileDate() {
-	now := time.Now()
-	if now.Year() != currentDay.Year() || now.Month() != currentDay.Month() || now.Day() != currentDay.Day() {
-		Close()
-		if err := setOutputFile(); err != nil {
-			fmt.Println(err)
-			fmt.Println("LOGS WON'T BE WRITTEN IN LOG FILES")
-			logger.SetOutput(os.Stdout)
-		}
-	} else {
-		flush()
-	}
-}
-
-func addQueue(state, message string) {
-	text := fmt.Sprintf("[%v] %v\n", state, message)
-
-	lock.Lock()
-	queue = append(queue, text)
-	lock.Unlock()
-
-	if time.Now().After(lastFlush.Add(FlushDelay)) {
-		checkLogFileDate()
-	}
-}
-
-func flush() {
-	lastFlush = time.Now()
-
-	lock.Lock()
-	for _, m := range queue {
-		logger.Printf(m)
-	}
-	queue = []string{}
-	lock.Unlock()
+	l.customTags = newTagList()
 }

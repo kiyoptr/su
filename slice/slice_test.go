@@ -1,4 +1,4 @@
-package reflect
+package slice
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 
 func TestReverseSlice(t *testing.T) {
 	s1 := []int{1, 2, 3}
-	s2, err := ReverseSlice(s1)
+	s2, err := Reverse(s1)
 	if err != nil {
 		t.Fatal(err)
 	}
