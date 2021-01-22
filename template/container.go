@@ -60,12 +60,25 @@ func (t *Container) LoadDirectory(path string) error {
 				templateName = strings.TrimSuffix(templateName, ext)
 				templateName = strings.ReplaceAll(templateName, "/", ".")
 				t.Templates[templateName], err = template.New(templateName).Parse(string(templateData))
+				if err != nil {
+					return errors.Newif(err, "failed to parse template %s at %s", templateName, path)
+				}
 				t.Templates[templateName].Funcs(t.Functions)
 			}
 		}
 	}
 
 	return nil
+}
+
+func (t *Container) Parse(name string, data string) (err error) {
+	t.Templates[name], err = template.New(name).Parse(data)
+	if err != nil {
+		err = errors.Newif(err, "failed to parse template string %s", name)
+		return
+	}
+	t.Templates[name].Funcs(t.Functions)
+	return
 }
 
 func (t *Container) Execute(writer io.Writer, name string, data interface{}) error {
