@@ -13,6 +13,7 @@ This a utility package I made for personal projects. Contains most the stuff I r
 | sharder | Data sharder |
 | slice | Slice helpers |
 | strings | Strings helpers |
+| template | Text template utilities |
 | ticker | Job scheduler |
 
 # License
